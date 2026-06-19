@@ -11,7 +11,8 @@ import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.demodata.data.session.SessionManager
 import com.example.demodata.ui.viewmodel.SessionViewModel
-
+import com.example.demodata.ui.screens.LoginScreen
+import com.example.demodata.ui.navigation.AppNavigation
 class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -34,12 +35,24 @@ class MainActivity : ComponentActivity() {
             val darkModePref by sessionViewModel.isDarkMode
                 .collectAsStateWithLifecycle()
 
+            val isLoggedIn by sessionViewModel.isLoggedIn
+                .collectAsStateWithLifecycle()
+
             val darkTheme = darkModePref ?: false
 
             AppTheme(
                 darkTheme = darkTheme
             ) {
-                GpsScreen(gpsViewModel = gpsViewModel)
+                if (isLoggedIn) {
+                    AppNavigation(
+                        gpsViewModel = gpsViewModel,
+                        sessionViewModel = sessionViewModel
+                    )
+                } else {
+                    LoginScreen(
+                        sessionViewModel = sessionViewModel
+                    )
+                }
             }
 
         }

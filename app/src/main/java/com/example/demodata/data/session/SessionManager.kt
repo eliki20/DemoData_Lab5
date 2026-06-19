@@ -29,6 +29,12 @@ class SessionManager(private val context: Context) {
     val isDarkMode: Flow<Boolean?> = context.sessionDataStore.data
         .map { prefs -> prefs[KEY_DARK_MODE] }
 
+    suspend fun login(username: String) {
+        context.sessionDataStore.edit { prefs ->
+            prefs[KEY_IS_LOGGED_IN] = true
+            prefs[KEY_USERNAME] = username
+        }
+    }
     suspend fun setDarkMode(enabled: Boolean) {
         context.sessionDataStore.edit { prefs ->
             prefs[KEY_DARK_MODE] = enabled

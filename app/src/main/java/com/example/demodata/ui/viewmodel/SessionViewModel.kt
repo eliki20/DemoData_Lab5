@@ -30,6 +30,12 @@ class SessionViewModel(
         null
     )
 
+    fun login(username: String) {
+        viewModelScope.launch {
+            sessionManager.login(username)
+        }
+    }
+
     fun setDarkMode(enabled: Boolean) {
         viewModelScope.launch {
             sessionManager.setDarkMode(enabled)
