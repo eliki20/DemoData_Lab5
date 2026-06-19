@@ -2,47 +2,49 @@ package com.example.demodata.ui.navigation
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.CloudSync
+import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Place
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.example.demodata.ui.screens.AudioScreen
 import com.example.demodata.ui.screens.GpsScreen
+import com.example.demodata.ui.screens.MediaScreen
+import com.example.demodata.ui.screens.NotificationsScreen
 import com.example.demodata.ui.screens.ProfileScreen
+import com.example.demodata.ui.screens.SyncScreen
 import com.example.demodata.ui.viewmodel.GpsViewModel
 import com.example.demodata.ui.viewmodel.SessionViewModel
 
-sealed class Ruta(
-    val ruta: String,
-    val etiqueta: String,
-    val icono: ImageVector
+sealed class RutaLab5(
+    val route: String,
+    val label: String,
+    val icon: ImageVector
 ) {
-    object Gps : Ruta(
-        ruta = "gps",
-        etiqueta = "Captura GNSS",
-        icono = Icons.Default.Place
-    )
-
-    object Perfil : Ruta(
-        ruta = "perfil",
-        etiqueta = "Mi Perfil",
-        icono = Icons.Default.Person
-    )
+    object Gps : RutaLab5("gps", "GNSS", Icons.Default.LocationOn)
+    object Media : RutaLab5("media", "Multimedia", Icons.Default.CameraAlt)
+    object Audio : RutaLab5("audio", "Audio", Icons.Default.Mic)
+    object Sync : RutaLab5("sync", "Sync", Icons.Default.CloudSync)
+    object Notif : RutaLab5("notif", "Notif", Icons.Default.Notifications)
+    object Profile : RutaLab5("profile", "Perfil", Icons.Default.Person)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -52,45 +54,33 @@ fun AppNavigation(
     sessionViewModel: SessionViewModel
 ) {
     val navController = rememberNavController()
-    val currentBackStack by navController.currentBackStackEntryAsState()
-    val currentDestination = currentBackStack?.destination
+    var selectedIndex by remember { mutableIntStateOf(0) }
 
     val tabs = listOf(
-        Ruta.Gps,
-        Ruta.Perfil
+        RutaLab5.Gps,
+        RutaLab5.Media,
+        RutaLab5.Audio,
+        RutaLab5.Sync,
+        RutaLab5.Notif,
+        RutaLab5.Profile
     )
-
-    val tituloActual = when (currentDestination?.route) {
-        Ruta.Gps.ruta -> "Laboratorio 4: GNSS Dual"
-        Ruta.Perfil.ruta -> "Panel de Usuario"
-        else -> "DemoData"
-    }
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
-                    Text(tituloActual)
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                )
+                    Text("DemoData")
+                }
             )
         },
         bottomBar = {
-            NavigationBar(
-                containerColor = MaterialTheme.colorScheme.surfaceContainer
-            ) {
-                tabs.forEach { tab ->
-
-                    val selected = currentDestination?.hierarchy
-                        ?.any { it.route == tab.ruta } == true
-
+            NavigationBar {
+                tabs.forEachIndexed { index, tab ->
                     NavigationBarItem(
-                        selected = selected,
+                        selected = selectedIndex == index,
                         onClick = {
-                            navController.navigate(tab.ruta) {
+                            selectedIndex = index
+                            navController.navigate(tab.route) {
                                 popUpTo(navController.graph.startDestinationId) {
                                     saveState = true
                                 }
@@ -100,12 +90,12 @@ fun AppNavigation(
                         },
                         icon = {
                             Icon(
-                                imageVector = tab.icono,
-                                contentDescription = tab.etiqueta
+                                imageVector = tab.icon,
+                                contentDescription = tab.label
                             )
                         },
                         label = {
-                            Text(tab.etiqueta)
+                            Text(tab.label)
                         }
                     )
                 }
@@ -115,14 +105,30 @@ fun AppNavigation(
 
         NavHost(
             navController = navController,
-            startDestination = Ruta.Gps.ruta,
+            startDestination = RutaLab5.Gps.route,
             modifier = Modifier.padding(paddingValues)
         ) {
-            composable(Ruta.Gps.ruta) {
+            composable(RutaLab5.Gps.route) {
                 GpsScreen(gpsViewModel = gpsViewModel)
             }
 
-            composable(Ruta.Perfil.ruta) {
+            composable(RutaLab5.Media.route) {
+                MediaScreen()
+            }
+
+            composable(RutaLab5.Audio.route) {
+                AudioScreen()
+            }
+
+            composable(RutaLab5.Sync.route) {
+                SyncScreen()
+            }
+
+            composable(RutaLab5.Notif.route) {
+                NotificationsScreen()
+            }
+
+            composable(RutaLab5.Profile.route) {
                 ProfileScreen(
                     sessionViewModel = sessionViewModel
                 )

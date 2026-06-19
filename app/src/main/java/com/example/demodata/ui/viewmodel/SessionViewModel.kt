@@ -7,6 +7,7 @@ import com.example.demodata.data.session.SessionManager
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import com.example.demodata.security.PasswordHasher
 
 class SessionViewModel(
     private val sessionManager: SessionManager
@@ -30,9 +31,41 @@ class SessionViewModel(
         null
     )
 
-    fun login(username: String) {
-        viewModelScope.launch {
-            sessionManager.login(username)
+    fun login(
+        username: String,
+        password: String,
+        onResult: (Boolean) -> Unit
+    ) {
+
+        val salt = "DemoDataSalt2026".toByteArray()
+
+        val storedHash = PasswordHasher.hash(
+            password = "jkn",
+            salt = salt
+        )
+
+        val inputHash = PasswordHasher.hash(
+            password = password,
+            salt = salt
+        )
+
+        val validUser = username == "jkn"
+
+        val validPassword =
+            PasswordHasher.constantTimeEquals(
+                inputHash,
+                storedHash
+            )
+
+        if (validUser && validPassword) {
+
+            viewModelScope.launch {
+                sessionManager.login(username)
+                onResult(true)
+            }
+
+        } else {
+            onResult(false)
         }
     }
 

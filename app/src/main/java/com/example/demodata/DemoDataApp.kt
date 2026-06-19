@@ -1,24 +1,45 @@
 package com.example.demodata
 
 import android.app.Application
-import androidx.room.Room
 import com.example.demodata.data.local.AppDatabase
+import com.example.demodata.data.local.FileStorageManager
+import com.example.demodata.data.repository.AudioRepository
 import com.example.demodata.data.repository.GpsRepository
+import com.example.demodata.data.repository.MediaRepository
+import com.example.demodata.data.session.SessionManager
 
 class DemoDataApp : Application() {
 
-    val database: AppDatabase by lazy {
-        Room.databaseBuilder(
-            applicationContext,
-            AppDatabase::class.java,
-            "demo_data_db"
-        ).build()
+    val database by lazy {
+        AppDatabase.getDatabase(this)
     }
 
-    val gpsRepository: GpsRepository by lazy {
+    val fileStorage by lazy {
+        FileStorageManager(this)
+    }
+
+    val sessionManager by lazy {
+        SessionManager(this)
+    }
+
+    val gpsRepository by lazy {
         GpsRepository(
             database.gpsGoogleDao(),
             database.gpsSensorsDao()
+        )
+    }
+
+    val mediaRepository by lazy {
+        MediaRepository(
+            database.mediaDao(),
+            fileStorage
+        )
+    }
+
+    val audioRepository by lazy {
+        AudioRepository(
+            database.audioDao(),
+            fileStorage
         )
     }
 }

@@ -1,15 +1,17 @@
 package com.example.demodata.data.session
 
 import android.content.Context
+import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import androidx.datastore.preferences.core.Preferences
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
 private val Context.sessionDataStore by preferencesDataStore(
-    name = "session_prefs"
+    name = "fleet_session"
 )
 
 class SessionManager(private val context: Context) {

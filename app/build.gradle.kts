@@ -56,6 +56,9 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation("androidx.compose.ui:ui-text-google-fonts:1.11.2")
+    // WorkManager - notificaciones diferidas
+    implementation("androidx.work:work-runtime-ktx:2.9.0")
+    implementation("io.coil-kt:coil-video:2.7.0")
     // ── Compose BOM (gestiona versiones de todos los artefactos Compose) ──
     implementation("androidx.compose.material:material-icons-extended:1.7.8")
     implementation("androidx.navigation:navigation-compose:2.8.0")

@@ -8,94 +8,128 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
-import com.example.demodata.ui.viewmodel.SessionViewModel
 
 @Composable
 fun LoginScreen(
-    sessionViewModel: SessionViewModel
+    onSubmit: (
+        username: String,
+        password: String,
+        onResult: (Boolean) -> Unit
+    ) -> Unit
 ) {
-
-    var username by remember { mutableStateOf("") }
+    var usuario by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    var error by remember { mutableStateOf(false) }
+    var error by remember { mutableStateOf("") }
+    var verificando by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(24.dp),
-        verticalArrangement = Arrangement.Center
+            .padding(32.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
 
         Text(
-            text = "Iniciar Sesión",
-            style = MaterialTheme.typography.headlineMedium
+            text = "DemoData",
+            style = MaterialTheme.typography.displayMedium,
+            color = MaterialTheme.colorScheme.primary
         )
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Text(
+            text = "Sistema de gestión de datos",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+
+        Spacer(modifier = Modifier.height(48.dp))
 
         OutlinedTextField(
-            value = username,
+            value = usuario,
             onValueChange = {
-                username = it
-                error = false
+                usuario = it
+                error = ""
             },
-            label = {
-                Text("Usuario")
-            },
+            label = { Text("Usuario") },
+            singleLine = true,
+            enabled = !verificando,
             modifier = Modifier.fillMaxWidth()
         )
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(8.dp))
 
         OutlinedTextField(
             value = password,
             onValueChange = {
                 password = it
-                error = false
+                error = ""
             },
-            label = {
-                Text("Contraseña")
-            },
+            label = { Text("Contraseña") },
+            singleLine = true,
+            enabled = !verificando,
             visualTransformation = PasswordVisualTransformation(),
             modifier = Modifier.fillMaxWidth()
         )
 
-        Spacer(modifier = Modifier.height(20.dp))
-
-        Button(
-            modifier = Modifier.fillMaxWidth(),
-            onClick = {
-
-                if (username == "admin" && password == "demodata") {
-
-                    sessionViewModel.login(username)
-
-                } else {
-
-                    error = true
-                }
-            }
-        ) {
-            Text("Ingresar")
-        }
-
-        if (error) {
-
-            Spacer(modifier = Modifier.height(12.dp))
-
+        if (error.isNotEmpty()) {
+            Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "Usuario o contraseña incorrectos",
+                text = error,
                 color = MaterialTheme.colorScheme.error
             )
         }
 
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Button(
+            onClick = {
+                error = ""
+                verificando = true
+
+                onSubmit(usuario, password) { ok ->
+                    verificando = false
+                    if (!ok) {
+                        error = "Credenciales incorrectas. Pruebe jkn/jkn."
+                    }
+                }
+            },
+            enabled = !verificando &&
+                    usuario.isNotBlank() &&
+                    password.isNotBlank(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(50.dp)
+        ) {
+            if (verificando) {
+                CircularProgressIndicator(
+                    modifier = Modifier.height(24.dp),
+                    strokeWidth = 2.dp,
+                    color = MaterialTheme.colorScheme.onPrimary
+                )
+            } else {
+                Text("Ingresar")
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Text(
+            text = "Credenciales por defecto: jkn / jkn",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.outline
+        )
     }
 }
