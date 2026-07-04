@@ -308,7 +308,7 @@ private fun MediaItemRow(
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
-                    .size(64.dp)
+                    .size(45.dp)
                     .clip(RoundedCornerShape(8.dp))
             )
 

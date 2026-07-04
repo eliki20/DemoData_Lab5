@@ -4,95 +4,154 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.demodata.data.session.SessionManager
+import com.example.demodata.data.remote.NetworkConstants
+import com.example.demodata.data.remote.RetrofitClient
+import com.example.demodata.data.remote.model.*
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import com.example.demodata.security.PasswordHasher
+import kotlinx.serialization.json.Json
 
 class SessionViewModel(
     private val sessionManager: SessionManager
 ) : ViewModel() {
 
     val isLoggedIn = sessionManager.isLoggedIn.stateIn(
-        viewModelScope,
-        SharingStarted.Eagerly,
-        false
+        scope        = viewModelScope,
+        started      = SharingStarted.Eagerly,
+        initialValue = false
     )
 
     val username = sessionManager.currentUsername.stateIn(
-        viewModelScope,
-        SharingStarted.Eagerly,
-        null
+        scope        = viewModelScope,
+        started      = SharingStarted.Eagerly,
+        initialValue = null
     )
 
     val isDarkMode = sessionManager.isDarkMode.stateIn(
-        viewModelScope,
-        SharingStarted.Eagerly,
-        null
+        scope        = viewModelScope,
+        started      = SharingStarted.Eagerly,
+        initialValue = null
     )
 
-    fun login(
-        username: String,
-        password: String,
-        onResult: (Boolean) -> Unit
-    ) {
+    fun login(email: String, password: String, onResult: (Boolean, String?) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val response = RetrofitClient.apiService.login(
+                    projectSlug = NetworkConstants.PROJECT_SLUG,
+                    request = LoginRequest(
+                        email = email,
+                        password = password,
+                        deviceId = sessionManager.getDeviceId()
+                    )
+                )
 
-        val salt = "DemoDataSalt2026".toByteArray()
+                if (response.isSuccessful && response.body() != null) {
 
-        val storedHash = PasswordHasher.hash(
-            password = "jkn",
-            salt = salt
-        )
+                    val body = response.body()!!
+                    sessionManager.login(email, body.accessToken, body.refreshToken)
+                    onResult(true, null)
 
-        val inputHash = PasswordHasher.hash(
-            password = password,
-            salt = salt
-        )
+                } else {
 
-        val validUser = username == "jkn"
+                    val errorBody = response.errorBody()?.string()
 
-        val validPassword =
-            PasswordHasher.constantTimeEquals(
-                inputHash,
-                storedHash
-            )
+                    val errorMessage = try {
+                        if (errorBody.isNullOrEmpty()) {
+                            ErrorResponse("Sin respuesta del servidor")
+                        } else {
+                            Json.decodeFromString<ErrorResponse>(errorBody)
+                        }
+                    } catch (e: Exception) {
+                        ErrorResponse(
+                            detail = errorBody ?: "Error desconocido del servidor"
+                        )
+                    }
 
-        if (validUser && validPassword) {
+                    onResult(false, errorMessage.detail)
+                }
 
-            viewModelScope.launch {
-                sessionManager.login(username)
-                onResult(true)
+            } catch (e: Exception) {
+                onResult(false, "Error de conexión")
             }
+        }
+    }
 
-        } else {
-            onResult(false)
+    fun register(email: String, password: String, onResult: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val response = RetrofitClient.apiService.register(
+                    projectSlug = NetworkConstants.PROJECT_SLUG,
+                    request     = RegisterRequest(email, password)
+                )
+                onResult(response.isSuccessful)
+            } catch (e: Exception) {
+                onResult(false)
+            }
+        }
+    }
+
+    fun loginWithGoogle(googleToken: String, onResult: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val response = RetrofitClient.apiService.loginWithGoogle(
+                    projectSlug = NetworkConstants.PROJECT_SLUG,
+                    request     = GoogleLoginRequest(
+                        token    = googleToken,
+                        deviceId = sessionManager.getDeviceId()
+                    )
+                )
+                if (response.isSuccessful && response.body() != null) {
+                    val body = response.body()!!
+                    sessionManager.login("Google User", body.accessToken, body.refreshToken)
+                    onResult(true)
+                } else {
+                    onResult(false)
+                }
+            } catch (e: Exception) {
+                onResult(false)
+            }
+        }
+    }
+
+    fun refreshSession(onResult: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val currentRefresh = sessionManager.refreshToken.firstOrNull()
+                if (currentRefresh != null) {
+                    val response = RetrofitClient.apiService.refreshToken(
+                        projectSlug = NetworkConstants.PROJECT_SLUG,
+                        request     = RefreshTokenRequest(
+                            refreshToken = currentRefresh,
+                            deviceId     = sessionManager.getDeviceId()
+                        )
+                    )
+                    if (response.isSuccessful && response.body() != null) {
+                        val body = response.body()!!
+                        sessionManager.updateTokens(body.accessToken, body.refreshToken)
+                        onResult(true)
+                        return@launch
+                    }
+                }
+                onResult(false)
+            } catch (e: Exception) {
+                onResult(false)
+            }
         }
     }
 
     fun setDarkMode(enabled: Boolean) {
-        viewModelScope.launch {
-            sessionManager.setDarkMode(enabled)
-        }
+        viewModelScope.launch { sessionManager.setDarkMode(enabled) }
     }
 
     fun logout() {
-        viewModelScope.launch {
-            sessionManager.logout()
-        }
+        viewModelScope.launch { sessionManager.logout() }
     }
 
-    class Factory(
-        private val sessionManager: SessionManager
-    ) : ViewModelProvider.Factory {
-
-        override fun <T : ViewModel> create(
-            modelClass: Class<T>
-        ): T {
-            if (modelClass.isAssignableFrom(SessionViewModel::class.java)) {
-                @Suppress("UNCHECKED_CAST")
-                return SessionViewModel(sessionManager) as T
-            }
-            throw IllegalArgumentException("Unknown ViewModel class")
-        }
+    class Factory(private val sessionManager: SessionManager) : ViewModelProvider.Factory {
+        @Suppress("UNCHECKED_CAST")
+        override fun <T : ViewModel> create(modelClass: Class<T>): T =
+            SessionViewModel(sessionManager) as T
     }
 }

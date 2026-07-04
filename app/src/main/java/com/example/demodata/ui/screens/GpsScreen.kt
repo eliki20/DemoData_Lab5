@@ -23,6 +23,7 @@ import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import androidx.compose.ui.graphics.Color
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
@@ -50,8 +51,15 @@ fun GpsScreen(
     ) {
 
         Text(
-            text = "GNSS - Captura de Coordenadas",
-            style = MaterialTheme.typography.titleLarge
+            text = "GNSS Tracking",
+            style = MaterialTheme.typography.headlineSmall,
+            color = MaterialTheme.colorScheme.primary
+        )
+
+        Text(
+            text = "Monitoreo de ubicación en tiempo real",
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.secondary
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -93,6 +101,10 @@ fun GpsScreen(
                     capturando = false
                 }
             },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(45.dp),
+            shape = MaterialTheme.shapes.large,
             colors = ButtonDefaults.buttonColors(
                 containerColor = if (capturando)
                     MaterialTheme.colorScheme.error
@@ -104,12 +116,14 @@ fun GpsScreen(
                 imageVector = if (capturando) Icons.Default.Stop else Icons.Default.PlayArrow,
                 contentDescription = null
             )
-            Spacer(modifier = Modifier.width(8.dp))
+
+            Spacer(modifier = Modifier.width(12.dp))
+
             Text(
                 if (capturando)
                     "Detener captura"
                 else
-                    "Capturar coordenada cada 10 s"
+                    "Capturar coordenada (cada 10 segundos)"
             )
         }
 
@@ -122,17 +136,30 @@ fun GpsScreen(
             CounterCard(
                 title = "Google FLP",
                 count = googlePoints.size,
+                color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.weight(1f)
             )
 
             CounterCard(
                 title = "Sensor GNSS",
                 count = sensorsPoints.size,
+                color = MaterialTheme.colorScheme.tertiary,
                 modifier = Modifier.weight(1f)
             )
         }
 
         Spacer(modifier = Modifier.height(16.dp))
+
+        Text(
+            text = "Historial corporativo (sincronizado)",
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp)
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
 
         LazyColumn(
             verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -151,12 +178,29 @@ fun GpsScreen(
 private fun CounterCard(
     title: String,
     count: Int,
+    color: Color,
     modifier: Modifier = Modifier
 ) {
-    Card(modifier = modifier) {
+    Card(
+        modifier = modifier,
+        colors = CardDefaults.cardColors(
+            containerColor = color.copy(alpha = 0.12f)
+        )
+    ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text(title, style = MaterialTheme.typography.titleMedium)
-            Text("$count registros")
+
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleMedium,
+                color = color
+            )
+
+            Spacer(modifier = Modifier.height(6.dp))
+
+            Text(
+                text = "$count registros",
+                style = MaterialTheme.typography.bodyLarge
+            )
         }
     }
 }
@@ -186,7 +230,7 @@ private fun ComparativeCaptureCard(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Text("GOOGLE FLP", style = MaterialTheme.typography.labelLarge)
+                    Text("GOOGLE FLP", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
 
                     if (record.google?.latitude == null) {
                         Text(
@@ -201,7 +245,7 @@ private fun ComparativeCaptureCard(
                 }
 
                 Column(modifier = Modifier.weight(1f)) {
-                    Text("SENSOR GNSS", style = MaterialTheme.typography.labelLarge)
+                    Text("SENSOR GNSS", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.tertiary)
 
                     if (record.sensors?.latitude == null) {
                         Text(

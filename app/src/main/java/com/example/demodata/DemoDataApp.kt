@@ -7,6 +7,7 @@ import com.example.demodata.data.repository.AudioRepository
 import com.example.demodata.data.repository.GpsRepository
 import com.example.demodata.data.repository.MediaRepository
 import com.example.demodata.data.session.SessionManager
+import com.example.demodata.data.remote.RetrofitClient
 
 class DemoDataApp : Application() {
 
@@ -41,5 +42,11 @@ class DemoDataApp : Application() {
             database.audioDao(),
             fileStorage
         )
+    }
+
+    override fun onCreate() {
+        super.onCreate()
+
+        RetrofitClient.init(sessionManager)
     }
 }

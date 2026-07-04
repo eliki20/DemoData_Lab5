@@ -31,17 +31,8 @@ class MainActivity : ComponentActivity() {
             AppTheme(
                 darkTheme = usarModoOscuro,
                 dynamicColor = false
-            ) {
-                if (isLoggedIn) {
-                    AppNavigation(
-                        gpsViewModel = gpsViewModel,
-                        sessionViewModel = sessionViewModel
-                    )
-                } else {
-                    LoginScreen(
-                        onSubmit = sessionViewModel::login
-                    )
-                }
+            ){
+                    AppNavigation()
             }
         }
     }
